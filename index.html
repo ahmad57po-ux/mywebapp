@@ -1297,23 +1297,24 @@ function askReset(){
     });
 }
 function save() {
-  // دالة جلب البيانات من Supabase
+// دالة جلب البيانات من Supabase
 async function loadData() {
-  const { data, error } = await supabaseClient
-    .from('tasks')
-    .select('title')
-    .eq('id', 1)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabaseClient
+      .from('tasks')
+      .select('title')
+      .eq('id', 1)
+      .maybeSingle();
 
-  if (error) {
-    console.error('خطأ في جلب البيانات:', error);
-  } else if (data && data.title) {
-    try {
+    if (error) {
+      console.error('خطأ في جلب البيانات:', error);
+    } else if (data && data.title) {
       DB = JSON.parse(data.title);
-      renderShell();
-    } catch (e) {
-      console.error('خطأ في قراءة البيانات:', e);
     }
+  } catch (e) {
+    console.error('حدث خطأ أثناء الاتصال:', e);
+  } finally {
+    renderShell();
   }
 }
 
@@ -1331,6 +1332,7 @@ async function saveData() {
   }
 }
 
+// تشغيل جلب البيانات عند فتح الصفحة
 loadData();
 </script>
 </body>
