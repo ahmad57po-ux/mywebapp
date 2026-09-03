@@ -1297,11 +1297,34 @@ function askReset(){
     });
 }
 
-/* ================================================================
-   تشغيل
-================================================================ */
+// دالة جلب البيانات من Supabase
+async function loadData() {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*');
+
+  if (error) {
+    console.error('خطأ في جلب البيانات:', error);
+  } else {
+    console.log('البيانات المسترجعة من السحابة:', data);
+  }
+}
+
+// دالة حفظ البيانات في Supabase
+async function saveData(text) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert([{ title: text }]);
+
+  if (error) {
+    console.error('خطأ في الحفظ:', error);
+  } else {
+    console.log('تم الحفظ في السحابة بنجاح!');
+    loadData();
+  }
+}
 renderShell();
-cloudInit();   // يتصل بالسحابة إن كان الرابط مضبوطًا (وإلا يبقى محليًا)
+loadData();  
 
 </script>
 </body>
