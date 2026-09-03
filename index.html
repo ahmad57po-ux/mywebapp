@@ -14,7 +14,7 @@
   const SUPABASE_URL = 'https://adznglbffcIblaxylqfp.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_PlnkA0xSdUKGgA-_Pu6e5g_XhaPBYfZ';
   
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 </script>
 <style>
 /* ============ Design tokens ============ */
@@ -1297,12 +1297,9 @@ function askReset(){
     });
 }
 function save() {
-  localStorage.setItem('my_app_db', JSON.stringify(DB));
-  saveData();
-}
-// دالة جلب البيانات من Supabase
+  // دالة جلب البيانات من Supabase
 async function loadData() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('tasks')
     .select('title')
     .eq('id', 1)
@@ -1320,10 +1317,10 @@ async function loadData() {
   }
 }
 
-// دالة حفظ كامل البيانات في Supabase
+// دالة حفظ البيانات في Supabase
 async function saveData() {
   const jsonData = JSON.stringify(DB);
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('tasks')
     .upsert([{ id: 1, title: jsonData }]);
 
@@ -1332,10 +1329,10 @@ async function saveData() {
   } else {
     console.log('تم الحفظ في السحابة بنجاح!');
   }
-}
-renderShell();
+
 loadData();  
 
+  
 </script>
 </body>
 </html>
