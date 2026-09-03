@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مسار الأنظمة المدمجة والروبوتات — لوحة المتابعة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Design tokens ============ */
+:root{
+  --ink:#14203a;          /* blueprint navy — primary text/structure */
+  --ink-soft:#2c3a57;
+  --paper:#eef0ea;        /* warm workshop paper — app bg */
+  --surface:#ffffff;
+  --surface-2:#f7f6f1;
+  --line:#dcdccf;         /* hairline */
+  --line-2:#e8e7de;
+  --amber:#e0912b;        /* signal LED accent */
+  --amber-soft:#fbecd4;
+  --teal:#158d80;         /* "current week" turquoise nod */
+  --teal-soft:#d9efec;
+  --green:#2f8f57;
+  --green-soft:#dcefe1;
+  --red:#c0503f;
+  --red-soft:#f7e2dd;
+  --slate:#6b7488;
+  --slate-2:#9aa0af;
+
+  --r-lg:18px; --r-md:12px; --r-sm:8px;
+  --shadow-soft:0 1px 2px rgba(20,32,58,.05), 0 8px 26px rgba(20,32,58,.06);
+  --shadow-pop:0 12px 40px rgba(20,32,58,.18);
+  --font:"IBM Plex Sans Arabic", system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  background:var(--paper);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;color:var(--ink)}
+::selection{background:var(--amber-soft)}
+
+/* subtle blueprint grid texture behind everything */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:
+    linear-gradient(rgba(20,32,58,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(20,32,58,.035) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+
+/* ============ App shell ============ */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:1fr;min-height:100vh}
+@media(min-width:900px){ .app{grid-template-columns:266px 1fr} }
+
+/* ---- Sidebar ---- */
+.side{
+  background:var(--ink);color:#dfe4ee;
+  padding:22px 16px;display:flex;flex-direction:column;gap:6px;
+  position:sticky;top:0;height:100vh;
+}
+@media(max-width:899px){
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;padding:14px}
+}
+.brand{display:flex;align-items:center;gap:12px;padding:6px 8px 18px}
+@media(max-width:899px){ .brand{padding:0;width:100%;padding-bottom:6px} }
+.brand .mark{
+  width:42px;height:42px;border-radius:11px;flex:none;
+  background:linear-gradient(150deg,var(--teal),#0f6f65);
+  display:grid;place-items:center;color:#fff;position:relative;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+}
+.brand .mark svg{width:24px;height:24px}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:.1px;line-height:1.3;color:#fff}
+.brand p{font-size:12px;color:#8f9bb3;font-weight:400}
+
+.nav{display:flex;flex-direction:column;gap:4px}
+@media(max-width:899px){ .nav{flex-direction:row;flex-wrap:wrap;gap:6px} }
+.nav button{
+  display:flex;align-items:center;gap:11px;width:100%;
+  background:transparent;border:0;color:#c2cadb;
+  padding:11px 12px;border-radius:10px;font-size:14.5px;font-weight:500;
+  transition:background .15s,color .15s;text-align:right;
+}
+.nav button .ic{width:19px;height:19px;flex:none;opacity:.85}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.on{background:var(--amber);color:#3a2606;font-weight:600}
+.nav button.on .ic{opacity:1}
+.nav .badge{margin-inline-start:auto;font-size:12px;background:rgba(255,255,255,.12);
+  padding:1px 8px;border-radius:20px;font-weight:600;min-width:24px;text-align:center}
+.nav button.on .badge{background:rgba(58,38,6,.18)}
+
+.saved-tag{margin-top:auto;display:flex;align-items:center;gap:8px;padding:9px 11px;margin-bottom:9px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:9px;cursor:pointer;
+  font-size:12px;color:#c2cadb;font-weight:500;transition:background .2s}
+.saved-tag:hover{background:rgba(255,255,255,.1)}
+.saved-tag svg{width:15px;height:15px;flex:none}
+.saved-tag.ok{background:rgba(21,141,128,.16);border-color:rgba(21,141,128,.34);color:#9fe4d9}
+.saved-tag.ok svg{color:var(--teal)}
+.saved-tag.warn{background:rgba(224,145,43,.16);border-color:rgba(224,145,43,.34);color:#f4cf95}
+.saved-tag.warn svg{color:var(--amber)}
+.saved-tag.bad{background:rgba(192,80,63,.18);border-color:rgba(192,80,63,.4);color:#f0b3a8}
+.saved-tag.bad svg{color:#e08072}
+.saved-tag.flash{filter:brightness(1.25)}
+@media(max-width:899px){ .saved-tag{margin-top:0;width:100%;order:-1} }
+
+/* sync modal extras */
+.sync-modal{text-align:right;max-width:460px}
+.sync-modal h3,.sync-modal>p{text-align:center}
+.sync-status{display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:10px;font-size:13px;font-weight:600;
+  background:var(--surface-2);border:1px solid var(--line-2);color:var(--slate);margin:4px 0 18px}
+.sync-status svg{width:18px;height:18px;flex:none}
+.sync-status.on{background:var(--teal-soft);border-color:rgba(21,141,128,.3);color:#0d5f57}
+.sync-status.on svg{color:var(--teal)}
+.sync-lbl{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+.sync-input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13px;
+  background:var(--surface-2);font-family:ui-monospace,monospace}
+.sync-input:focus{outline:2px solid var(--teal-soft);border-color:var(--teal);background:#fff}
+.sync-help{font-size:12px;color:var(--slate);margin:8px 0 18px;line-height:1.5;text-align:right}
+.sync-msg{font-size:12.5px;margin-top:12px;min-height:1em;text-align:center;color:var(--slate)}
+.sync-msg.bad{color:var(--red);font-weight:600}
+.sync-modal .row{flex-wrap:wrap}
+.sync-modal .row .btn{flex:1;justify-content:center;min-width:120px}
+.side-foot{display:flex;flex-direction:column;gap:8px}
+.side-foot:first-of-type{padding-top:0}
+@media(max-width:899px){ .side-foot{margin-top:0;flex-direction:row;width:100%} }
+.side-foot button{
+  border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);
+  color:#d7ddea;border-radius:9px;padding:9px;font-size:13px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;gap:7px;flex:1;
+  transition:background .15s;
+}
+.side-foot button:hover{background:rgba(255,255,255,.1)}
+.side-foot button svg{width:15px;height:15px}
+
+/* ---- Main ---- */
+.main{padding:26px clamp(16px,3.5vw,40px) 60px;max-width:1240px}
+.view{display:none;animation:rise .28s ease both}
+.view.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){ .view.on{animation:none} }
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.page-head .titles h2{font-size:23px;font-weight:700;letter-spacing:-.2px}
+.page-head .titles p{color:var(--slate);font-size:13.5px;margin-top:2px;max-width:64ch}
+
+/* ============ Buttons ============ */
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  padding:9px 15px;border-radius:10px;font-size:13.5px;font-weight:600;
+  display:inline-flex;align-items:center;gap:8px;transition:.15s;box-shadow:var(--shadow-soft)}
+.btn:hover{border-color:var(--slate-2)}
+.btn svg{width:16px;height:16px}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.primary:hover{background:#0d1729}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:#3a2606}
+.btn.amber:hover{filter:brightness(.97)}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:8px}
+
+/* ============ Dashboard hero ============ */
+.hero{
+  background:var(--ink);color:#eef1f7;border-radius:var(--r-lg);
+  padding:24px clamp(18px,3vw,30px);margin-bottom:22px;position:relative;overflow:hidden;
+  box-shadow:var(--shadow-soft);
+}
+.hero::after{ /* faint circuit corner */
+  content:"";position:absolute;left:-40px;top:-40px;width:240px;height:240px;opacity:.13;
+  background:
+    radial-gradient(circle at 30% 30%, var(--teal) 0 6px, transparent 7px),
+    radial-gradient(circle at 70% 60%, var(--amber) 0 5px, transparent 6px);
+  background-repeat:no-repeat;
+}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative}
+.hero-meta .eyebrow{color:var(--amber);font-size:12.5px;font-weight:600;letter-spacing:.3px}
+.hero-meta h2{font-size:26px;font-weight:700;margin-top:3px;color:#fff}
+.hero-meta .sub{color:#9fabc4;font-size:13.5px;margin-top:4px}
+
+.week-pick{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:9px 12px}
+.week-pick label{font-size:12px;color:#9fabc4;font-weight:500}
+.week-pick select{
+  background:var(--teal);color:#fff;border:0;border-radius:9px;padding:8px 12px;
+  font-size:14px;font-weight:700;box-shadow:0 0 0 3px rgba(21,141,128,.25)}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:22px;position:relative}
+.tile{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:13px;padding:14px 15px}
+.tile .k{font-size:12.5px;color:#9fabc4;font-weight:500;display:flex;align-items:center;gap:7px}
+.tile .k svg{width:15px;height:15px;opacity:.9}
+.tile .v{font-size:29px;font-weight:700;color:#fff;margin-top:5px;line-height:1;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:14px;color:#9fabc4;font-weight:500}
+.tile.accent{background:rgba(224,145,43,.14);border-color:rgba(224,145,43,.34)}
+.tile.accent .v{color:var(--amber)}
+
+/* dashboard grid below hero */
+.dash-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+@media(max-width:820px){ .dash-grid{grid-template-columns:1fr} }
+
+.panel{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);
+  padding:20px;box-shadow:var(--shadow-soft)}
+.panel h3{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.panel h3 svg{width:18px;height:18px;color:var(--teal)}
+.panel .hint{color:var(--slate);font-size:12.5px;margin-bottom:16px}
+
+/* progress ring */
+.ring-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.ring{position:relative;width:132px;height:132px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .mid{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .mid b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.ring .mid span{font-size:11.5px;color:var(--slate);display:block;margin-top:3px}
+.legend{display:flex;flex-direction:column;gap:11px;flex:1;min-width:150px}
+.legend .row{display:flex;align-items:center;gap:10px;font-size:13.5px}
+.legend .dot{width:11px;height:11px;border-radius:3px;flex:none}
+.legend .n{margin-inline-start:auto;font-weight:700;font-variant-numeric:tabular-nums}
+
+.info-list{display:flex;flex-direction:column}
+.info-list .li{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.info-list .li:last-child{border-bottom:0}
+.info-list .li .ic{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;
+  background:var(--surface-2);color:var(--teal)}
+.info-list .li .ic svg{width:17px;height:17px}
+.info-list .li .tx .lab{font-size:12px;color:var(--slate)}
+.info-list .li .tx .val{font-size:14.5px;font-weight:600;margin-top:1px}
+.info-list .li.amber .ic{color:var(--amber)}
+
+.members-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:22px;padding:5px 12px 5px 6px;font-size:13px;font-weight:500}
+.chip .av{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  font-size:11px;font-weight:700;flex:none}
+.chip button{background:none;border:0;color:var(--slate-2);font-size:15px;line-height:1;padding:0 2px}
+.chip button:hover{color:var(--red)}
+.add-inline{display:flex;gap:8px;margin-top:12px;max-width:340px}
+.add-inline input{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13.5px;background:var(--surface)}
+.add-inline input:focus{outline:2px solid var(--teal-soft);border-color:var(--teal)}
+
+/* ============ Tables / cards ============ */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.search{position:relative;flex:1;min-width:180px;max-width:340px}
+.search svg{position:absolute;right:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--slate-2)}
+.search input{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 36px 9px 12px;font-size:13.5px;background:var(--surface);box-shadow:var(--shadow-soft)}
+.search input:focus{outline:2px solid var(--teal-soft);border-color:var(--teal)}
+.filter-sel{border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13.5px;background:var(--surface);font-weight:500;box-shadow:var(--shadow-soft)}
+
+.table-wrap{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);
+  overflow:hidden;box-shadow:var(--shadow-soft)}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl thead th{background:var(--surface-2);text-align:right;font-weight:600;font-size:12.5px;color:var(--ink-soft);
+  padding:12px 14px;border-bottom:1px solid var(--line-2);white-space:nowrap;position:sticky;top:0}
+.tbl thead th.sortable{cursor:pointer;user-select:none;transition:color .12s,background .12s}
+.tbl thead th.sortable:hover{color:var(--ink);background:#efeee7}
+.tbl thead th .sh{display:inline-flex;align-items:center;gap:6px}
+.tbl thead th .sar{font-size:10px;color:var(--slate-2);font-style:normal;transition:color .12s}
+.tbl thead th.on{color:var(--teal)}
+.tbl thead th.on .sar{color:var(--teal)}
+.rowcount{font-size:12.5px;color:var(--slate);font-weight:600;background:var(--surface);
+  border:1px solid var(--line);border-radius:20px;padding:6px 13px;box-shadow:var(--shadow-soft)}
+.tbl tbody td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:var(--surface-2)}
+.tbl .del{background:none;border:0;color:var(--slate-2);width:30px;height:30px;border-radius:8px;display:grid;place-items:center}
+.tbl .del:hover{background:var(--red-soft);color:var(--red)}
+.tbl .del svg{width:16px;height:16px}
+.rownum{color:var(--slate-2);font-size:12px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* inline editable cells */
+.cell-in{width:100%;border:1px solid transparent;background:transparent;border-radius:7px;
+  padding:7px 9px;font-size:13.5px;transition:.12s;min-width:90px}
+.cell-in:hover{background:var(--surface-2)}
+.cell-in:focus{outline:none;background:#fff;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
+textarea.cell-in{resize:vertical;min-height:34px;line-height:1.4}
+select.cell-in{cursor:pointer;font-weight:500;min-width:110px}
+.cell-in::placeholder{color:var(--slate-2)}
+td.td-link a{color:var(--teal);font-weight:600;font-size:12.5px}
+
+/* status pill inside select wrapper */
+.pill-sel{position:relative;display:inline-block}
+.pill-sel select{appearance:none;border:0;border-radius:20px;padding:6px 30px 6px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+.pill-sel::after{content:"▾";position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:10px;pointer-events:none;opacity:.6}
+.s-green{background:var(--green-soft);color:#1f6b3d}
+.s-amber{background:var(--amber-soft);color:#8a5a12}
+.s-slate{background:#e7e8ee;color:#4b5364}
+.s-teal{background:var(--teal-soft);color:#0d5f57}
+.s-red{background:var(--red-soft);color:#9a3a2c}
+
+/* progress bar cell (projects) */
+.prog{display:flex;align-items:center;gap:9px;min-width:120px}
+.prog .bar{flex:1;height:7px;background:var(--line-2);border-radius:20px;overflow:hidden}
+.prog .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--green));border-radius:20px}
+.prog b{font-size:12.5px;font-variant-numeric:tabular-nums;min-width:34px;text-align:left}
+
+.empty{padding:46px 20px;text-align:center;color:var(--slate)}
+.empty svg{width:42px;height:42px;color:var(--slate-2);margin-bottom:10px}
+.empty b{display:block;font-size:15px;color:var(--ink);margin-bottom:3px}
+
+.tbl-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;
+  background:var(--surface-2);border-top:1px solid var(--line-2);font-size:13px;color:var(--slate);flex-wrap:wrap}
+.tbl-foot .total{font-weight:700;color:var(--ink);font-size:14.5px}
+.tbl-foot .total b{color:var(--amber)}
+
+/* budget summary strip */
+.budget-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.bcard{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-md);padding:16px 18px;box-shadow:var(--shadow-soft);position:relative;overflow:hidden}
+.bcard .k{font-size:12.5px;color:var(--slate);font-weight:500}
+.bcard .v{font-size:26px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.bcard .v small{font-size:13px;color:var(--slate);font-weight:500}
+.bcard.tot{background:var(--ink);color:#fff}
+.bcard.tot .k{color:#9fabc4}
+.bcard.tot .v small{color:#9fabc4}
+.bcard .edge{position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px}
+.by-project{margin-top:6px}
+.by-project .bp-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.by-project .bp-row:last-child{border-bottom:0}
+.by-project .bp-row .nm{font-weight:600;font-size:13.5px}
+.by-project .bp-row .amt{margin-inline-start:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.by-project .bp-row .barw{flex:1;max-width:220px;height:8px;background:var(--line-2);border-radius:20px;overflow:hidden}
+.by-project .bp-row .barw i{display:block;height:100%;background:var(--amber);border-radius:20px}
+
+/* toast */
+.toast{position:fixed;inset-block-end:24px;inset-inline-start:50%;transform:translateX(50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:500;
+  box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:.25s;z-index:50;display:flex;align-items:center;gap:9px}
+.toast.show{opacity:1;transform:translateX(50%) translateY(0)}
+.toast svg{width:17px;height:17px;color:var(--teal)}
+
+/* modal (reset confirm) */
+.modal-bg{position:fixed;inset:0;background:rgba(20,32,58,.5);backdrop-filter:blur(3px);z-index:60;
+  display:none;place-items:center;padding:20px}
+.modal-bg.show{display:grid}
+.modal{background:var(--surface);border-radius:16px;padding:26px;max-width:420px;width:100%;box-shadow:var(--shadow-pop);text-align:center}
+.modal .mi{width:52px;height:52px;border-radius:14px;background:var(--red-soft);color:var(--red);display:grid;place-items:center;margin:0 auto 14px}
+.modal .mi svg{width:26px;height:26px}
+.modal h3{font-size:18px;font-weight:700}
+.modal p{color:var(--slate);font-size:13.5px;margin:8px 0 20px}
+.modal .row{display:flex;gap:10px}
+.modal .row .btn{flex:1;justify-content:center}
+
+.add-row-btn{margin-top:14px}
+h3.sect{font-size:15px;font-weight:700;margin:26px 0 12px;display:flex;align-items:center;gap:9px}
+h3.sect svg{width:18px;height:18px;color:var(--teal)}
+.foot-note{margin-top:34px;text-align:center;color:var(--slate-2);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modalBg"></div>
+<script>
+/* ================================================================
+   مسار الأنظمة المدمجة والروبوتات — لوحة متابعة تفاعلية
+   بيانات محفوظة محليًا في المتصفح (localStorage). لا تحتاج إنترنت.
+================================================================ */
+
+/* ---------- الثوابت / القوائم المنسدلة (نفس قوائم الشيت الأصلي) ---------- */
+const WEEKS = Array.from({length:16}, (_,i)=>`الأسبوع ${i+1}`);
+const PROJECT_STATUS = ["فكرة","جاري العمل","متوقف مؤقتًا","مكتمل"];
+const TASK_STATUS    = ["لم تبدأ","قيد التنفيذ","مكتملة"];
+const ATTEND         = ["حضر","غائب","معتذر"];
+const PART_STATUS    = ["نحتاج شراء","تم الطلب","تم الشراء","متوفرة مسبقًا"];
+
+const STATUS_CLASS = {
+  "فكرة":"s-slate","جاري العمل":"s-amber","متوقف مؤقتًا":"s-red","مكتمل":"s-green",
+  "لم تبدأ":"s-slate","قيد التنفيذ":"s-amber","مكتملة":"s-green",
+  "حضر":"s-green","غائب":"s-red","معتذر":"s-amber",
+  "نحتاج شراء":"s-red","تم الطلب":"s-amber","تم الشراء":"s-green","متوفرة مسبقًا":"s-teal"
+};
+
+const AVATAR_COLORS = ["#158d80","#e0912b","#4b6bd6","#c0503f","#2f8f57","#8a5ac0","#c07d1e","#1e8fa8"];
+
+/* ---------- الحالة الافتراضية (نفس الأمثلة في الشيت) ---------- */
+function seed(){
+  return {
+    trackName:"الأنظمة المدمجة والروبوتات",
+    term:"الترم الأول",
+    currentWeek:"الأسبوع 1",
+    members:["أحمد","سارة","خالد","نورة","فيصل"],
+    projects:[
+      {id:uid(), name:"روبوت متتبع خط",
+       idea:"روبوت صغير يتتبع خطًا أسود باستخدام حساسات الانعكاس الضوئي",
+       goal:"تعلم أساسيات التحكم بالمحركات والحساسات",
+       req:"متحكم Arduino Uno، حساسات IR، محركات DC، عجلات، بطارية، أسلاك توصيل",
+       team:"أحمد، سارة، خالد", leader:"أحمد", start:"2026-09-01",
+       status:"جاري العمل", link:"https://drive.google.com/example", notes:"مثال — يمكن حذفه"}
+    ],
+    weekly:[
+      {id:uid(), week:"الأسبوع 1", goal:"تجهيز الأدوات وتوزيع المهام الأولية",
+       project:"روبوت متتبع خط", task:"طلب القطع الأساسية (Arduino، حساسات، محركات)",
+       who:"أحمد", due:"2026-09-06", status:"قيد التنفيذ",
+       meetDate:"2026-09-03", attend:"حضر", done:"تم تحديد قائمة القطع المطلوبة", notes:"مثال — يمكن حذفه"}
+    ],
+    achievements:[
+      {id:uid(), date:"2026-09-03", week:"الأسبوع 1", member:"أحمد", project:"روبوت متتبع خط",
+       activity:"البحث عن الحساسات المناسبة للمشروع",
+       did:"بحثت في مواصفات عدة حساسات انعكاس ضوئي وقارنت بينها",
+       achieved:"تم اختيار حساس QTR-8A وتحديد طريقة توصيله",
+       proof:"https://drive.google.com/example-report", attend:"حضر", notes:"مثال — يمكن حذفه"}
+    ],
+    parts:[
+      {id:uid(), project:"روبوت متتبع خط", name:"متحكم Arduino Uno", qty:1, price:45,
+       status:"تم الشراء", link:"https://example-store.com/arduino-uno", buyer:"خالد", notes:"مثال — يمكن حذفه"}
+    ]
+  };
+}
+
+/* ================================================================
+   ⬇️⬇️⬇️  المشاركة عبر الإنترنت (اختياري)  ⬇️⬇️⬇️
+   لتفعيل المشاركة بين كل من لديه الرابط، ضع رابط قاعدة بيانات
+   Firebase Realtime Database بين علامتي التنصيص بالأسفل.
+   مثال: "https://my-track-default-rtdb.firebaseio.com"
+   (تقدر أيضًا تضيف الرابط من داخل التطبيق: زر «المزامنة والمشاركة».)
+================================================================ */
+const CLOUD_URL = "";
+
+/* ---------- تحميل / حفظ ---------- */
+const KEY = "robotics_track_v1";
+const CFG = "robotics_track_cfg";        // إعدادات محلية (رابط السحابة)
+let DB;
+try{ DB = JSON.parse(localStorage.getItem(KEY)) || seed(); }
+catch(e){ DB = seed(); }
+
+/* حالة المزامنة */
+let cloud = {
+  url: (function(){ try{ return (JSON.parse(localStorage.getItem(CFG))||{}).url || CLOUD_URL; }catch(e){ return CLOUD_URL; } })(),
+  status: "local",     // local | connecting | online | error
+  pendingPush: false,
+  lastSynced: null,    // آخر نص JSON تمت مزامنته
+  pushT: null, pollT: null
+};
+function cloudEndpoint(){
+  let u=(cloud.url||"").trim().replace(/\/+$/,"");
+  if(!u) return null;
+  return u + "/track.json";
+}
+function setCloudUrl(u){
+  cloud.url=(u||"").trim();
+  try{ localStorage.setItem(CFG, JSON.stringify({url:cloud.url})); }catch(e){}
+}
+
+let savedFlashT;
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}   // نسخة محلية دائمًا (تعمل بدون نت)
+  const tag=document.getElementById("savedTag");
+  if(tag){ tag.classList.add("flash"); clearTimeout(savedFlashT);
+    savedFlashT=setTimeout(()=>tag.classList.remove("flash"),450); }
+  schedulePush();   // ادفع للسحابة إن كانت مفعّلة
+}
+
+/* دفع مؤجّل للسحابة (يتجمّع لتقليل الطلبات) */
+function schedulePush(){
+  if(!cloudEndpoint()) return;
+  cloud.pendingPush=true; updateSyncUI();
+  clearTimeout(cloud.pushT);
+  cloud.pushT=setTimeout(cloudPush, 700);
+}
+async function cloudPush(){
+  const ep=cloudEndpoint(); if(!ep) return;
+  const body=JSON.stringify(DB);
+  try{
+    const r=await fetch(ep,{method:"PUT",headers:{"Content-Type":"application/json"},body});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    cloud.lastSynced=body; cloud.pendingPush=false; cloud.status="online"; updateSyncUI();
+  }catch(e){
+    cloud.status="error"; updateSyncUI();
+  }
+}
+/* سحب البيانات من السحابة */
+async function cloudPull(){
+  const ep=cloudEndpoint(); if(!ep) return null;
+  const r=await fetch(ep,{method:"GET"});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return await r.json();
+}
+/* أول اتصال عند فتح التطبيق */
+async function cloudInit(){
+  if(!cloudEndpoint()){ cloud.status="local"; return; }
+  cloud.status="connecting"; updateSyncUI();
+  try{
+    const remote=await cloudPull();
+    if(remote && typeof remote==="object" && ("projects" in remote)){
+      DB=normalizeDB(remote);
+      try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+      cloud.lastSynced=JSON.stringify(DB);
+    }else{
+      // السحابة فارغة → ارفع النسخة الحالية كبداية مشتركة
+      await cloudPush();
+      cloud.lastSynced=JSON.stringify(DB);
+    }
+    cloud.status="online"; renderShell();
+    startPolling();
+  }catch(e){
+    cloud.status="error"; updateSyncUI();
+  }
+}
+/* استطلاع دوري لرؤية تعديلات الآخرين (فقط حين لا يكتب المستخدم) */
+function startPolling(){
+  clearInterval(cloud.pollT);
+  cloud.pollT=setInterval(pollRemote, 7000);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) pollRemote(); });
+  window.addEventListener("focus", pollRemote);
+}
+async function pollRemote(){
+  if(!cloudEndpoint() || cloud.pendingPush) return;         // لا تسحب أثناء وجود تعديل محلي غير محفوظ
+  if(isEditingNow()) return;                                // لا تقاطع مستخدمًا يكتب
+  try{
+    const remote=await cloudPull();
+    if(!remote) return;
+    const remoteStr=JSON.stringify(normalizeDB(remote));
+    const localStr=JSON.stringify(DB);
+    if(remoteStr!==localStr){
+      DB=JSON.parse(remoteStr);
+      try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+      cloud.lastSynced=remoteStr; cloud.status="online";
+      renderShell();
+      toast("تم تحديث البيانات من الفريق");
+    }else{
+      cloud.status="online"; updateSyncUI();
+    }
+  }catch(e){ cloud.status="error"; updateSyncUI(); }
+}
+function isEditingNow(){
+  const el=document.activeElement;
+  return el && (el.tagName==="INPUT"||el.tagName==="TEXTAREA"||el.tagName==="SELECT");
+}
+/* يضمن اكتمال كل الحقول عند استيراد/سحب بيانات */
+function normalizeDB(d){
+  const out={
+    trackName:d.trackName||"الأنظمة المدمجة والروبوتات",
+    term:d.term||"الترم الأول",
+    currentWeek:d.currentWeek||"الأسبوع 1",
+    members:Array.isArray(d.members)?d.members:[],
+    projects:Array.isArray(d.projects)?d.projects:[],
+    weekly:Array.isArray(d.weekly)?d.weekly:[],
+    achievements:Array.isArray(d.achievements)?d.achievements:[],
+    parts:Array.isArray(d.parts)?d.parts:[]
+  };
+  ["projects","weekly","achievements","parts"].forEach(c=>out[c].forEach(r=>{ if(!r.id) r.id=uid(); }));
+  return out;
+}
+
+/* ---------- أدوات ---------- */
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){ return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function colorFor(name){
+  let h=0; for(const ch of String(name)) h=(h*31+ch.charCodeAt(0))>>>0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function initials(name){ const p=String(name).trim().split(/\s+/); return (p[0]?.[0]||"؟")+(p[1]?.[0]||""); }
+let toastT;
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>${esc(msg)}`;
+  t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),1900);
+}
+function num(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+function money(n){ return n.toLocaleString("en-US",{maximumFractionDigits:2}); }
+
+/* ---------- أيقونات (inline SVG) ---------- */
+const I = {
+  grid:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>',
+  cube:'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  star:'<path d="M11.5 2.5 14 8l6 .5-4.5 4 1.4 6L11.5 15 6 18.5l1.4-6L3 8.5 9 8z"/>',
+  coins:'<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V4s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V4"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  spin:'<path d="M21 12a9 9 0 1 1-6.2-8.5"/>',
+  pause:'<path d="M9 4H6v16h3zM18 4h-3v16h3z"/>',
+  trash:'<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+  cloud:'<path d="M17.5 19a4.5 4.5 0 0 0 .5-9 6 6 0 0 0-11.6-1.5A4 4 0 0 0 6.5 19z"/>',
+  cloudoff:'<path d="M17.5 19a4.5 4.5 0 0 0 .5-9 6 6 0 0 0-1.3-2.5M6.5 19A4 4 0 0 1 6 11a6 6 0 0 1 2-3M2 2l20 20"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  refresh:'<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
+  chip:'<rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/>',
+  inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.5 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.5A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.5z"/>'
+};
+function svg(path,cls=""){ return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`; }
+
+/* ================================================================
+   الحالة العامة للعرض
+================================================================ */
+let VIEW = "dash";
+const filters = { proj:"", weekly:"", ach:"", parts:"" };
+
+/* حالة الترتيب لكل جدول: الحقل + الاتجاه (1 تصاعدي، -1 تنازلي) */
+const sortState = {
+  projects:{field:null,dir:1}, weekly:{field:null,dir:1},
+  achievements:{field:null,dir:1}, parts:{field:null,dir:1}
+};
+/* الحقول الرقمية / التاريخية للترتيب الصحيح */
+const NUM_FIELDS  = new Set(["qty","price","cost","progress"]);
+const DATE_FIELDS = new Set(["start","due","meetDate","date"]);
+
+function toggleSort(coll, field){
+  if(!field) return;
+  const s=sortState[coll];
+  if(s.field===field) s.dir=-s.dir; else { s.field=field; s.dir=1; }
+  renderShell();
+}
+function sortRows(coll, rows){
+  const s=sortState[coll]; if(!s.field) return rows;
+  const f=s.field, dir=s.dir;
+  const val=(r)=>{
+    if(f==="cost")     return num(r.qty)*num(r.price);
+    if(f==="progress") return projectProgress(r.name);
+    return r[f];
+  };
+  return rows.slice().sort((a,b)=>{
+    let x=val(a), y=val(b);
+    // القيم الفارغة دائمًا في الأسفل
+    const ex=(x===""||x==null), ey=(y===""||y==null);
+    if(ex&&ey) return 0; if(ex) return 1; if(ey) return -1;
+    if(NUM_FIELDS.has(f)){ x=num(x); y=num(y); return (x-y)*dir; }
+    if(DATE_FIELDS.has(f)) return (String(x)<String(y)?-1:String(x)>String(y)?1:0)*dir;
+    return String(x).localeCompare(String(y),"ar")*dir;
+  });
+}
+/* رأس عمود قابل للترتيب */
+function sortHead(coll, label, field){
+  if(!field) return `<th>${label}</th>`;
+  const s=sortState[coll];
+  const active=s.field===field;
+  const arrow=active ? (s.dir===1?"▲":"▼") : "↕";
+  const cls=active?"sortable on":"sortable";
+  return `<th class="${cls}" onclick="toggleSort('${coll}','${field}')">
+    <span class="sh">${label}<i class="sar">${arrow}</i></span></th>`;
+}
+
+/* ---------- حسابات لوحة التحكم (مشتقة تلقائيًا) ---------- */
+function stats(){
+  const cw = DB.currentWeek;
+  const wk = DB.weekly.filter(t=>t.week===cw);
+  const done = wk.filter(t=>t.status==="مكتملة").length;
+  const prog = wk.filter(t=>t.status==="قيد التنفيذ").length;
+  const not  = wk.filter(t=>t.status==="لم تبدأ" || !t.status).length;
+  const total = wk.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  // أقرب اجتماع قادم
+  const today = new Date().toISOString().slice(0,10);
+  const future = DB.weekly.map(t=>t.meetDate).filter(d=>d && d>=today).sort();
+  const nextMeet = future[0] || "لا يوجد اجتماع محدد";
+  // هدف الأسبوع الحالي
+  const goalRow = DB.weekly.find(t=>t.week===cw && t.goal);
+  const weekGoal = goalRow ? goalRow.goal : "لم يُحدد بعد";
+  return {done,prog,not,total,pct,nextMeet,weekGoal,
+          members:DB.members.length, projects:DB.projects.length};
+}
+
+/* ---------- مساعد: القائمة المنسدلة كخلية ---------- */
+function selectCell(value, options, onchangeAttr, pill=false){
+  const opts = ['<option value=""></option>', ...options.map(o=>`<option ${o===value?"selected":""}>${esc(o)}</option>`)].join("");
+  if(pill){
+    const cls = STATUS_CLASS[value] || "s-slate";
+    return `<span class="pill-sel"><select class="${cls}" ${onchangeAttr}>${opts}</select></span>`;
+  }
+  return `<select class="cell-in" ${onchangeAttr}>${opts}</select>`;
+}
+function memberOptions(v){ return selectCell(v, DB.members, `data-x`); }
+
+/* ================================================================
+   بناء الهيكل العام (Sidebar + Main)
+================================================================ */
+function renderShell(){
+  const s = stats();
+  const app = document.getElementById("app");
+  app.innerHTML = `
+  <aside class="side">
+    <div class="brand">
+      <div class="mark">${svg(I.chip)}</div>
+      <div><h1>مسار الأنظمة المدمجة<br>والروبوتات</h1><p>${esc(DB.term)}</p></div>
+    </div>
+    <nav class="nav" id="nav">
+      ${navBtn("dash","لوحة التحكم",I.grid,"")}
+      ${navBtn("projects","المشاريع",I.cube,DB.projects.length)}
+      ${navBtn("weekly","الخطة الأسبوعية",I.cal,DB.weekly.length)}
+      ${navBtn("ach","سجل الإنجازات",I.star,DB.achievements.length)}
+      ${navBtn("parts","تكلفة القطع",I.coins,DB.parts.length)}
+    </nav>
+    <div class="saved-tag" id="savedTag" onclick="openSync()">${syncTagInner()}</div>
+    <div class="side-foot">
+      <button onclick="exportJSON()">${svg(I.download)} حفظ نسخة</button>
+      <button onclick="document.getElementById('importFile').click()">${svg(I.upload)} استيراد</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importJSON(event)">
+    </div>
+    <div class="side-foot" style="margin-top:0">
+      <button onclick="openSync()">${svg(I.share)} المزامنة والمشاركة</button>
+      <button onclick="askReset()">${svg(I.refresh)} تفريغ</button>
+    </div>
+  </aside>
+  <main class="main">
+    <section class="view ${VIEW==='dash'?'on':''}" id="v-dash">${viewDash(s)}</section>
+    <section class="view ${VIEW==='projects'?'on':''}" id="v-projects">${viewProjects()}</section>
+    <section class="view ${VIEW==='weekly'?'on':''}" id="v-weekly">${viewWeekly()}</section>
+    <section class="view ${VIEW==='ach'?'on':''}" id="v-ach">${viewAch()}</section>
+    <section class="view ${VIEW==='parts'?'on':''}" id="v-parts">${viewParts()}</section>
+    <p class="foot-note">جميع بياناتك محفوظة داخل هذا المتصفح فقط · اضغط «حفظ نسخة» لتنزيل نسخة احتياطية</p>
+  </main>`;
+}
+function navBtn(id,label,icon,badge){
+  return `<button class="${VIEW===id?'on':''}" onclick="go('${id}')">
+    ${svg(icon,'ic')}<span>${label}</span>
+    ${badge!==""?`<span class="badge">${badge}</span>`:""}</button>`;
+}
+function go(id){ VIEW=id; renderShell(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+/* ================================================================
+   عرض: لوحة التحكم
+================================================================ */
+function viewDash(s){
+  const weekOpts = WEEKS.map(w=>`<option ${w===DB.currentWeek?'selected':''}>${esc(w)}</option>`).join("");
+  const C=2*Math.PI*54, off=C*(1-s.pct/100);
+  const seg=[
+    {lab:"مكتملة",n:s.done,c:"var(--green)"},
+    {lab:"قيد التنفيذ",n:s.prog,c:"var(--amber)"},
+    {lab:"لم تبدأ",n:s.not,c:"var(--slate-2)"}
+  ];
+  const membersChips = DB.members.map((m,i)=>`
+    <span class="chip"><span class="av" style="background:${colorFor(m)}">${esc(initials(m))}</span>${esc(m)}
+    <button title="حذف" onclick="delMember(${i})">×</button></span>`).join("") ||
+    `<span style="color:var(--slate);font-size:13px">لا يوجد أعضاء بعد — أضف أول عضو أدناه</span>`;
+
+  return `
+  <div class="page-head">
+    <div class="titles"><h2>لوحة التحكم</h2>
+      <p>نظرة سريعة على وضع المسار. كل الأرقام تتحدّث تلقائيًا من بقية الصفحات — فقط اختر «الأسبوع الحالي».</p>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-top">
+      <div class="hero-meta">
+        <div class="eyebrow">${esc(DB.term)}</div>
+        <h2>${esc(DB.trackName)}</h2>
+        <div class="sub">هدف الأسبوع: ${esc(s.weekGoal)}</div>
+      </div>
+      <div class="week-pick">
+        <label>الأسبوع الحالي</label>
+        <select onchange="setWeek(this.value)">${weekOpts}</select>
+      </div>
+    </div>
+    <div class="tiles">
+      ${tile(I.users,"الأعضاء",s.members)}
+      ${tile(I.cube,"المشاريع",s.projects)}
+      ${tile(I.cal,"مهام الأسبوع",s.total)}
+      ${tile(I.check,"مكتملة",s.done,true)}
+      ${tile(I.spin,"قيد التنفيذ",s.prog)}
+      ${tile(I.flag,"لم تبدأ",s.not)}
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="panel">
+      <h3>${svg(I.target)} إنجاز الأسبوع الحالي</h3>
+      <p class="hint">نسبة المهام المكتملة من إجمالي مهام «${esc(DB.currentWeek)}».</p>
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg width="132" height="132" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="var(--line-2)" stroke-width="11"/>
+            <circle cx="60" cy="60" r="54" fill="none" stroke="var(--teal)" stroke-width="11"
+              stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+          </svg>
+          <div class="mid"><div><b>${s.pct}%</b><span>${s.done} من ${s.total}</span></div></div>
+        </div>
+        <div class="legend">
+          ${seg.map(g=>`<div class="row"><span class="dot" style="background:${g.c}"></span>${g.lab}<span class="n">${g.n}</span></div>`).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>${svg(I.clock)} معلومات المسار</h3>
+      <p class="hint">تُحسب من صفحتَي الخطة الأسبوعية والمشاريع.</p>
+      <div class="info-list">
+        <div class="li"><div class="ic">${svg(I.cal)}</div><div class="tx"><div class="lab">الاجتماع القادم</div><div class="val">${esc(s.nextMeet)}</div></div></div>
+        <div class="li amber"><div class="ic">${svg(I.flag)}</div><div class="tx"><div class="lab">هدف الأسبوع الحالي</div><div class="val">${esc(s.weekGoal)}</div></div></div>
+        <div class="li"><div class="ic">${svg(I.cube)}</div><div class="tx"><div class="lab">عدد المشاريع النشطة</div><div class="val">${DB.projects.filter(p=>p.status==="جاري العمل").length} من ${DB.projects.length}</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h3>${svg(I.users)} أعضاء المسار</h3>
+    <p class="hint">هذه الأسماء تظهر تلقائيًا في كل القوائم المنسدلة للمسؤولين. أضف أو احذف كما تشاء.</p>
+    <div class="members-strip">${membersChips}</div>
+    <div class="add-inline">
+      <input id="newMember" placeholder="اسم عضو جديد…" onkeydown="if(event.key==='Enter')addMember()">
+      <button class="btn amber" onclick="addMember()">${svg(I.plus)} إضافة</button>
+    </div>
+  </div>`;
+}
+function tile(icon,k,v,accent=false){
+  return `<div class="tile ${accent?'accent':''}"><div class="k">${svg(icon)}${k}</div><div class="v">${v}</div></div>`;
+}
+
+/* ---------- إجراءات لوحة التحكم ---------- */
+function setWeek(w){ DB.currentWeek=w; save(); renderShell(); }
+function addMember(){
+  const el=document.getElementById("newMember"); const v=(el.value||"").trim();
+  if(!v) return; if(DB.members.includes(v)){ toast("الاسم موجود مسبقًا"); return; }
+  DB.members.push(v); save(); renderShell(); toast("تمت إضافة العضو");
+}
+function delMember(i){
+  const name=DB.members[i];
+  const used = DB.projects.some(p=>p.leader===name || (p.team||"").includes(name))
+    || DB.weekly.some(t=>t.who===name)
+    || DB.achievements.some(a=>a.member===name)
+    || DB.parts.some(p=>p.buyer===name);
+  const extra = used ? " هذا العضو مذكور في بعض الصفوف؛ لن تُحذف تلك الصفوف، لكن سيختفي اسمه من القوائم المنسدلة." : "";
+  confirmModal(`حذف العضو «${name}»؟`, `سيُحذف من قائمة الأعضاء.${extra}`, "نعم، احذف", ()=>{
+    DB.members.splice(i,1); save(); renderShell(); toast("تم حذف العضو");
+  });
+}
+
+/* ================================================================
+   نظام عام للتعديل داخل الخلايا
+   edit(collection, id, field, value)  — يُستدعى من كل خلية
+================================================================ */
+function edit(coll, id, field, value){
+  const row = DB[coll].find(r=>r.id===id); if(!row) return;
+  row[field]=value; save();
+  // إعادة رسم مخفّفة: لوحة التحكم و الميزانية تعتمد على هذه البيانات
+  if(coll==="weekly" || coll==="projects" || coll==="parts"){
+    // حدّث الشارات و الحسابات دون فقد التركيز إن أمكن
+    refreshDerived(coll);
+  }
+}
+/* تحديث الأجزاء المحسوبة فقط (شارات القائمة الجانبية / تذييل الميزانية) */
+function refreshDerived(coll){
+  // شارة العدد في القائمة
+  // (إعادة الرسم الكامل تحدث عند الإضافة/الحذف؛ هنا فقط الأرقام)
+  if(coll==="parts"){ updateBudgetFoot(); }
+}
+
+/* مدخل نصي/تاريخ داخل خلية */
+function inCell(coll,id,field,val,type="text",ph=""){
+  const t = type==="area" ? "textarea" : "input";
+  const attr = `class="cell-in" data-c="${coll}" data-i="${id}" data-f="${field}"
+    oninput="edit('${coll}','${id}','${field}',this.value)" placeholder="${esc(ph)}"`;
+  if(type==="area") return `<textarea ${attr} rows="1">${esc(val||"")}</textarea>`;
+  const it = (type==="date")?"date":(type==="number")?"number":"text";
+  return `<input type="${it}" ${attr} value="${esc(val??"")}">`;
+}
+/* قائمة منسدلة داخل خلية */
+function inSelect(coll,id,field,val,options,pill=false){
+  const change=`onchange="edit('${coll}','${id}','${field}',this.value);${pill?`this.className='${''}';refreshPill(this,this.value)`:''}"`;
+  if(pill){
+    const cls=STATUS_CLASS[val]||"s-slate";
+    const opts=['<option value=""></option>',...options.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`)].join("");
+    return `<span class="pill-sel"><select class="${cls}" onchange="edit('${coll}','${id}','${field}',this.value);renderShell()">${opts}</select></span>`;
+  }
+  const opts=['<option value=""></option>',...options.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`)].join("");
+  return `<select class="cell-in" ${change}>${opts}</select>`;
+}
+/* قائمة المشاريع كمنسدلة (تُبنى من المشاريع الموجودة) */
+function projectSelect(coll,id,field,val){
+  const names=DB.projects.map(p=>p.name).filter(Boolean);
+  return inSelect(coll,id,field,val,names);
+}
+
+/* ================================================================
+   عرض: المشاريع
+================================================================ */
+function viewProjects(){
+  const q=filters.proj.toLowerCase();
+  let rows=DB.projects.filter(p=>!q || JSON.stringify(p).toLowerCase().includes(q));
+  rows=sortRows("projects",rows);
+  const body = rows.length ? rows.map((p,idx)=>{
+    const prog = projectProgress(p.name);
+    return `<tr>
+      <td class="rownum">${idx+1}</td>
+      <td>${inCell('projects',p.id,'name',p.name,'text','اسم المشروع')}</td>
+      <td>${inCell('projects',p.id,'idea',p.idea,'area','فكرة المشروع')}</td>
+      <td>${inCell('projects',p.id,'goal',p.goal,'area','الهدف')}</td>
+      <td>${inCell('projects',p.id,'req',p.req,'area','المتطلبات / القطع')}</td>
+      <td>${inCell('projects',p.id,'team',p.team,'area','أعضاء الفريق')}</td>
+      <td>${inSelect('projects',p.id,'leader',p.leader,DB.members)}</td>
+      <td>${inCell('projects',p.id,'start',p.start,'date')}</td>
+      <td>${inSelect('projects',p.id,'status',p.status,PROJECT_STATUS,true)}</td>
+      <td><div class="prog"><div class="bar"><i style="width:${prog}%"></i></div><b>${prog}%</b></div></td>
+      <td>${inCell('projects',p.id,'link',p.link,'text','رابط')}</td>
+      <td>${inCell('projects',p.id,'notes',p.notes,'area','ملاحظات')}</td>
+      <td><button class="del" onclick="delRow('projects','${p.id}')" title="حذف">${svg(I.trash)}</button></td>
+    </tr>`;
+  }).join("") : emptyRow(13,"لا توجد مشاريع بعد","أضف أول مشروع للمسار لتبدأ المتابعة.");
+
+  return tableView({
+    title:"المشاريع", desc:"عرّف كل مشروع مرة واحدة. «نسبة الإنجاز» تُحسب تلقائيًا من مهام الخطة الأسبوعية المرتبطة بالمشروع.",
+    coll:"projects", filterKey:"proj", count:rows.length,
+    heads:["#",["اسم المشروع","name"],["الفكرة","idea"],["الهدف","goal"],["المتطلبات","req"],["الفريق","team"],["القائد","leader"],["تاريخ البداية","start"],["الحالة","status"],["الإنجاز","progress"],["الرابط","link"],["ملاحظات","notes"],""],
+    body, addLabel:"إضافة مشروع"
+  });
+}
+function projectProgress(name){
+  if(!name) return 0;
+  const rel=DB.weekly.filter(t=>t.project===name);
+  if(!rel.length) return 0;
+  const done=rel.filter(t=>t.status==="مكتملة").length;
+  return Math.round(done/rel.length*100);
+}
+
+/* ================================================================
+   عرض: الخطة الأسبوعية والاجتماعات
+================================================================ */
+function viewWeekly(){
+  const f=filters.weekly;
+  let rows=DB.weekly.slice();
+  if(f && f!=="ALL") rows=rows.filter(t=>t.week===f);
+  rows=sortRows("weekly",rows);
+  const body = rows.length ? rows.map((t,idx)=>`
+    <tr>
+      <td class="rownum">${idx+1}</td>
+      <td>${inSelect('weekly',t.id,'week',t.week,WEEKS)}</td>
+      <td>${inCell('weekly',t.id,'goal',t.goal,'area','هدف الأسبوع')}</td>
+      <td>${projectSelect('weekly',t.id,'project',t.project)}</td>
+      <td>${inCell('weekly',t.id,'task',t.task,'area','المهمة')}</td>
+      <td>${inSelect('weekly',t.id,'who',t.who,DB.members)}</td>
+      <td>${inCell('weekly',t.id,'due',t.due,'date')}</td>
+      <td>${inSelect('weekly',t.id,'status',t.status,TASK_STATUS,true)}</td>
+      <td>${inCell('weekly',t.id,'meetDate',t.meetDate,'date')}</td>
+      <td>${inSelect('weekly',t.id,'attend',t.attend,ATTEND,true)}</td>
+      <td>${inCell('weekly',t.id,'done',t.done,'area','ما تم إنجازه')}</td>
+      <td>${inCell('weekly',t.id,'notes',t.notes,'area','ملاحظات')}</td>
+      <td><button class="del" onclick="delRow('weekly','${t.id}')" title="حذف">${svg(I.trash)}</button></td>
+    </tr>`).join("") : emptyRow(13,"لا توجد مهام","أضف مهام هذا الأسبوع ووزّعها على الأعضاء.");
+
+  const weekFilter = `<select class="filter-sel" onchange="filters.weekly=this.value;renderShell()">
+      <option value="ALL" ${!filters.weekly||filters.weekly==='ALL'?'selected':''}>كل الأسابيع</option>
+      ${WEEKS.map(w=>`<option ${filters.weekly===w?'selected':''}>${esc(w)}</option>`).join("")}
+    </select>`;
+
+  return tableView({
+    title:"الخطة الأسبوعية والاجتماعات", desc:"مهمة واحدة في كل صف: من المسؤول، موعد التسليم، حالتها، وتفاصيل الاجتماع.",
+    coll:"weekly", filterKey:"weekly", extraTool:weekFilter, count:rows.length,
+    heads:["#",["الأسبوع","week"],["هدف الأسبوع","goal"],["المشروع","project"],["المهمة","task"],["المسؤول","who"],["التسليم","due"],["الحالة","status"],["الاجتماع","meetDate"],["الحضور","attend"],["ما أُنجز","done"],["ملاحظات","notes"],""],
+    body, addLabel:"إضافة مهمة", addWeek:true
+  });
+}
+
+/* ================================================================
+   عرض: سجل إنجازات الأعضاء
+================================================================ */
+function viewAch(){
+  const f=filters.ach;
+  let rows=DB.achievements.slice();
+  if(f && f!=="ALL") rows=rows.filter(a=>a.member===f);
+  rows=sortRows("achievements",rows);
+  const body = rows.length ? rows.map((a,idx)=>`
+    <tr>
+      <td class="rownum">${idx+1}</td>
+      <td>${inCell('achievements',a.id,'date',a.date,'date')}</td>
+      <td>${inSelect('achievements',a.id,'week',a.week,WEEKS)}</td>
+      <td>${inSelect('achievements',a.id,'member',a.member,DB.members)}</td>
+      <td>${projectSelect('achievements',a.id,'project',a.project)}</td>
+      <td>${inCell('achievements',a.id,'activity',a.activity,'area','المهمة أو النشاط')}</td>
+      <td>${inCell('achievements',a.id,'did',a.did,'area','ماذا عملت؟')}</td>
+      <td>${inCell('achievements',a.id,'achieved',a.achieved,'area','ماذا أنجزت؟')}</td>
+      <td>${inCell('achievements',a.id,'proof',a.proof,'text','رابط الإثبات')}</td>
+      <td>${inSelect('achievements',a.id,'attend',a.attend,ATTEND,true)}</td>
+      <td>${inCell('achievements',a.id,'notes',a.notes,'area','ملاحظات')}</td>
+      <td><button class="del" onclick="delRow('achievements','${a.id}')" title="حذف">${svg(I.trash)}</button></td>
+    </tr>`).join("") : emptyRow(12,"لا توجد إنجازات مسجّلة","سجّل ما أنجزه كل عضو أسبوعيًا ليظهر إسهامه بوضوح.");
+
+  const memFilter = `<select class="filter-sel" onchange="filters.ach=this.value;renderShell()">
+      <option value="ALL" ${!filters.ach||filters.ach==='ALL'?'selected':''}>كل الأعضاء</option>
+      ${DB.members.map(m=>`<option ${filters.ach===m?'selected':''}>${esc(m)}</option>`).join("")}
+    </select>`;
+
+  return tableView({
+    title:"سجل إنجازات الأعضاء", desc:"سجل فردي لكل ما أنجزه كل عضو — مرجع واضح للمساهمات عند التقييم.",
+    coll:"achievements", filterKey:"ach", extraTool:memFilter, count:rows.length,
+    heads:["#",["التاريخ","date"],["الأسبوع","week"],["العضو","member"],["المشروع","project"],["النشاط","activity"],["ماذا عملت؟","did"],["ماذا أنجزت؟","achieved"],["الإثبات","proof"],["الحضور","attend"],["ملاحظات","notes"],""],
+    body, addLabel:"إضافة إنجاز"
+  });
+}
+
+/* ================================================================
+   عرض: تكلفة القطع + الميزانية
+================================================================ */
+function budget(){
+  let total=0, need=0, bought=0;
+  const byProj={};
+  DB.parts.forEach(p=>{
+    const cost=num(p.qty)*num(p.price);
+    total+=cost;
+    if(p.status==="نحتاج شراء") need++;
+    if(p.status==="تم الشراء") bought++;
+    const key=p.project||"غير محدد";
+    byProj[key]=(byProj[key]||0)+cost;
+  });
+  return {total,need,bought,byProj};
+}
+function viewParts(){
+  const q=filters.parts.toLowerCase();
+  let rows=DB.parts.filter(p=>!q || JSON.stringify(p).toLowerCase().includes(q));
+  rows=sortRows("parts",rows);
+  const b=budget();
+
+  const cards = `
+    <div class="budget-cards">
+      <div class="bcard tot"><div class="k">${''}إجمالي تكلفة القطع</div><div class="v">${money(b.total)} <small>ريال</small></div></div>
+      <div class="bcard"><div class="edge" style="background:var(--red)"></div><div class="k">قطع بحاجة للشراء</div><div class="v">${b.need}</div></div>
+      <div class="bcard"><div class="edge" style="background:var(--green)"></div><div class="k">قطع تم شراؤها</div><div class="v">${b.bought}</div></div>
+      <div class="bcard"><div class="edge" style="background:var(--teal)"></div><div class="k">إجمالي القطع المسجّلة</div><div class="v">${DB.parts.length}</div></div>
+    </div>`;
+
+  const projEntries=Object.entries(b.byProj).sort((a,c)=>c[1]-a[1]);
+  const maxV=Math.max(1,...projEntries.map(e=>e[1]));
+  const byProjHtml = projEntries.length ? `
+    <div class="panel" style="margin-bottom:20px">
+      <h3>${svg(I.coins)} التكلفة حسب المشروع</h3>
+      <div class="by-project">
+        ${projEntries.map(([nm,v])=>`<div class="bp-row"><span class="nm">${esc(nm)}</span>
+          <span class="barw"><i style="width:${(v/maxV*100).toFixed(0)}%"></i></span>
+          <span class="amt">${money(v)} ريال</span></div>`).join("")}
+      </div>
+    </div>` : "";
+
+  const body = rows.length ? rows.map((p,idx)=>{
+    const cost=num(p.qty)*num(p.price);
+    return `<tr>
+      <td class="rownum">${idx+1}</td>
+      <td>${projectSelect('parts',p.id,'project',p.project)}</td>
+      <td>${inCell('parts',p.id,'name',p.name,'text','اسم القطعة')}</td>
+      <td>${inCell('parts',p.id,'qty',p.qty,'number','0')}</td>
+      <td>${inCell('parts',p.id,'price',p.price,'number','0')}</td>
+      <td style="font-weight:700;color:var(--amber);white-space:nowrap;padding-inline-start:12px">${cost?money(cost):"—"}</td>
+      <td>${inSelect('parts',p.id,'status',p.status,PART_STATUS,true)}</td>
+      <td>${inCell('parts',p.id,'link',p.link,'text','رابط الشراء')}</td>
+      <td>${inSelect('parts',p.id,'buyer',p.buyer,DB.members)}</td>
+      <td>${inCell('parts',p.id,'notes',p.notes,'area','ملاحظات')}</td>
+      <td><button class="del" onclick="delRow('parts','${p.id}')" title="حذف">${svg(I.trash)}</button></td>
+    </tr>`;
+  }).join("") : emptyRow(11,"لا توجد قطع مسجّلة","أضف القطع المطلوبة لكل مشروع لحساب الميزانية تلقائيًا.");
+
+  const foot = `<div class="tbl-foot" id="budgetFoot">
+      <span>العملة: ريال سعودي (SAR) · التكلفة الإجمالية تُحسب تلقائيًا (الكمية × السعر)</span>
+      <span class="total">الإجمالي الكلي: <b>${money(b.total)}</b> ريال</span></div>`;
+
+  return `
+  <div class="page-head"><div class="titles"><h2>تكلفة القطع</h2>
+    <p>سجّل كل قطعة يحتاجها المشروع مع الكمية والسعر — التكلفة الإجمالية وملخص كل مشروع يُحسبان تلقائيًا.</p></div></div>
+  ${cards}
+  ${byProjHtml}
+  <div class="toolbar">
+    <div class="search">${svg(I.search)}<input placeholder="بحث في القطع…" value="${esc(filters.parts)}" oninput="filters.parts=this.value;debouncedRerender()"></div>
+    <button class="btn amber" style="margin-inline-start:auto" onclick="addRow('parts')">${svg(I.plus)} إضافة قطعة</button>
+  </div>
+  <div class="table-wrap">
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr>${["#",["المشروع","project"],["اسم القطعة","name"],["الكمية","qty"],["سعر الوحدة","price"],["التكلفة","cost"],["الحالة","status"],["رابط الشراء","link"],["المشتري","buyer"],["ملاحظات","notes"],""].map(h=>Array.isArray(h)?sortHead("parts",h[0],h[1]):`<th>${h}</th>`).join("")}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+    ${foot}
+  </div>`;
+}
+function updateBudgetFoot(){
+  const el=document.getElementById("budgetFoot"); if(!el) return;
+  const b=budget();
+  el.querySelector(".total").innerHTML=`الإجمالي الكلي: <b>${money(b.total)}</b> ريال`;
+}
+
+/* ================================================================
+   غلاف عام للجداول
+================================================================ */
+function tableView(o){
+  const search=`<div class="search">${svg(I.search)}<input placeholder="بحث…" value="${esc(filters[o.filterKey])}"
+      oninput="filters['${o.filterKey}']=this.value;debouncedRerender()"></div>`;
+  const heads = o.heads.map(h=>Array.isArray(h)?sortHead(o.coll,h[0],h[1]):`<th>${h}</th>`).join("");
+  const count = typeof o.count==="number" ? `<span class="rowcount">${o.count} صف</span>` : "";
+  return `
+  <div class="page-head"><div class="titles"><h2>${o.title}</h2><p>${o.desc}</p></div></div>
+  <div class="toolbar">
+    ${search}
+    ${o.extraTool||""}
+    ${count}
+    <button class="btn amber" style="margin-inline-start:auto" onclick="addRow('${o.coll}')">${svg(I.plus)} ${o.addLabel}</button>
+  </div>
+  <div class="table-wrap">
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr>${heads}</tr></thead>
+        <tbody>${o.body}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function emptyRow(cols,title,sub){
+  return `<tr><td colspan="${cols}"><div class="empty">${svg(I.inbox)}<b>${esc(title)}</b>${esc(sub)}</div></td></tr>`;
+}
+
+/* ================================================================
+   إضافة / حذف صف
+================================================================ */
+function addRow(coll){
+  const cw=DB.currentWeek;
+  const blank={
+    projects:{id:uid(),name:"",idea:"",goal:"",req:"",team:"",leader:"",start:"",status:"فكرة",link:"",notes:""},
+    weekly:{id:uid(),week:cw,goal:"",project:"",task:"",who:"",due:"",status:"لم تبدأ",meetDate:"",attend:"",done:"",notes:""},
+    achievements:{id:uid(),date:new Date().toISOString().slice(0,10),week:cw,member:"",project:"",activity:"",did:"",achieved:"",proof:"",attend:"",notes:""},
+    parts:{id:uid(),project:"",name:"",qty:"",price:"",status:"نحتاج شراء",link:"",buyer:"",notes:""}
+  }[coll];
+  DB[coll].unshift(blank); save(); renderShell();
+  toast("تمت الإضافة — عبّئ الصف الجديد");
+}
+const COLL_LABEL={projects:"المشروع",weekly:"المهمة",achievements:"الإنجاز",parts:"القطعة"};
+function delRow(coll,id){
+  const label=COLL_LABEL[coll]||"العنصر";
+  confirmModal(`حذف ${label}؟`, `سيتم حذف هذا الصف نهائيًا. لا يمكن التراجع.`, "نعم، احذف", ()=>{
+    DB[coll]=DB[coll].filter(r=>r.id!==id); save(); renderShell(); toast("تم الحذف");
+  });
+}
+
+/* إعادة رسم مؤجّلة عند البحث (حفاظًا على الأداء والتركيز) */
+let rerT;
+function debouncedRerender(){ clearTimeout(rerT); rerT=setTimeout(()=>{ renderShell(); focusSearch(); },260); }
+function focusSearch(){
+  const inp=document.querySelector('.search input');
+  if(inp){ inp.focus(); const v=inp.value; inp.value=""; inp.value=v; }
+}
+
+/* ================================================================
+   تصدير / تفريغ
+================================================================ */
+/* ================================================================
+   واجهة المزامنة والمشاركة
+================================================================ */
+const SYNC_TXT = {
+  local:      {ic:I.cloudoff, cls:"",       t:"محفوظ على هذا الجهاز فقط"},
+  connecting: {ic:I.cloud,    cls:"warn",   t:"جارٍ الاتصال بالسحابة…"},
+  online:     {ic:I.cloud,    cls:"ok",     t:"متصل — يُحفظ للجميع تلقائيًا"},
+  error:      {ic:I.cloudoff, cls:"bad",    t:"تعذّر الاتصال — محفوظ محليًا"}
+};
+function syncTagInner(){
+  const s=SYNC_TXT[cloud.pendingPush && cloud.status==="online" ? "connecting" : cloud.status] || SYNC_TXT.local;
+  const label = (cloud.pendingPush && cloud.status==="online") ? "جارٍ الحفظ للسحابة…" : s.t;
+  return `${svg(s.ic)}<span>${label}</span>`;
+}
+function updateSyncUI(){
+  const tag=document.getElementById("savedTag");
+  if(!tag) return;
+  const st = cloud.status;
+  tag.className="saved-tag "+({online:"ok",connecting:"warn",error:"bad",local:""}[st]||"");
+  tag.innerHTML=syncTagInner();
+}
+
+function openSync(){
+  const ep=cloudEndpoint();
+  const connected=!!ep && cloud.status==="online";
+  const bg=document.getElementById("modalBg");
+  const shareLink = location.href.split("#")[0];
+  bg.innerHTML=`<div class="modal sync-modal">
+    <div class="mi" style="background:var(--teal-soft);color:var(--teal)">${svg(I.share)}</div>
+    <h3>المزامنة والمشاركة</h3>
+    <p>لكي يستخدم كل من لديه الرابط نفس البيانات وتُحفظ تعديلاتهم للجميع، اربط التطبيق بقاعدة بيانات Firebase مجانية.</p>
+
+    <div class="sync-status ${connected?'on':''}">
+      ${svg(connected?I.cloud:I.cloudoff)}
+      <span>${connected?'متصل بالسحابة — كل تعديل يُحفظ للجميع':'غير متصل — البيانات محلية على هذا الجهاز فقط'}</span>
+    </div>
+
+    <label class="sync-lbl">رابط قاعدة بيانات Firebase</label>
+    <input id="cloudInput" class="sync-input" dir="ltr" placeholder="https://اسم-مشروعك-default-rtdb.firebaseio.com"
+      value="${esc(cloud.url||"")}">
+    <p class="sync-help">تجده في Firebase Console بعد إنشاء «Realtime Database». الصقه هنا واضغط اتصال. الخطوات الكاملة مكتوبة في محادثتنا.</p>
+
+    <div class="row">
+      ${connected
+        ? `<button class="btn ghost" onclick="disconnectCloud()">${svg(I.cloudoff)} فصل</button>
+           <button class="btn ghost" onclick="copyShare('${esc(shareLink)}',this)">${svg(I.copy)} نسخ رابط المشاركة</button>`
+        : `<button class="btn ghost" onclick="closeModal()">لاحقًا</button>`}
+      <button class="btn primary" style="background:var(--teal);border-color:var(--teal)" onclick="connectCloud()">
+        ${svg(I.cloud)} ${connected?'إعادة الاتصال':'اتصال'}</button>
+    </div>
+    <p id="syncMsg" class="sync-msg"></p>
+  </div>`;
+  bg.classList.add("show");
+  bg.onclick=e=>{ if(e.target===bg) closeModal(); };
+}
+async function connectCloud(){
+  const inp=document.getElementById("cloudInput");
+  const msg=document.getElementById("syncMsg");
+  const url=(inp.value||"").trim();
+  if(!url){ msg.textContent="الرجاء لصق رابط قاعدة البيانات أولًا."; msg.className="sync-msg bad"; return; }
+  if(!/^https:\/\/.+firebase.*\.com/i.test(url) && !/^https:\/\//i.test(url)){
+    msg.textContent="الرابط لا يبدو صحيحًا — يجب أن يبدأ بـ https:// وينتهي بـ firebaseio.com"; msg.className="sync-msg bad"; return;
+  }
+  setCloudUrl(url);
+  msg.textContent="جارٍ الاتصال والتحقق…"; msg.className="sync-msg";
+  cloud.status="connecting"; updateSyncUI();
+  try{
+    const remote=await cloudPull();
+    if(remote && typeof remote==="object" && ("projects" in remote)){
+      // دمج: نأخذ ما في السحابة (المصدر المشترك)
+      DB=normalizeDB(remote);
+    }else{
+      await cloudPush();  // السحابة فارغة → ارفع الحالي
+    }
+    try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+    cloud.lastSynced=JSON.stringify(DB); cloud.status="online";
+    startPolling();
+    closeModal(); renderShell();
+    toast("تم الاتصال — التطبيق الآن مشترك ومتزامن");
+  }catch(e){
+    cloud.status="error"; updateSyncUI();
+    msg.textContent="فشل الاتصال. تأكد أن الرابط صحيح وأن قواعد قاعدة البيانات تسمح بالقراءة والكتابة."; msg.className="sync-msg bad";
+  }
+}
+function disconnectCloud(){
+  confirmModal("فصل المزامنة؟","سيعود التطبيق للحفظ محليًا على هذا الجهاز فقط. البيانات في السحابة تبقى كما هي.","نعم، افصل",()=>{
+    clearInterval(cloud.pollT);
+    setCloudUrl(""); cloud.status="local"; cloud.lastSynced=null;
+    renderShell(); toast("تم الفصل — الحفظ محلي الآن");
+  });
+}
+function copyShare(link, btn){
+  navigator.clipboard?.writeText(link).then(()=>{
+    if(btn){ const o=btn.innerHTML; btn.innerHTML=`${svg(I.check)} تم النسخ`; setTimeout(()=>btn.innerHTML=o,1500); }
+  }).catch(()=>toast("انسخ الرابط من شريط العنوان"));
+}
+
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download="نسخة-احتياطية-مسار-الروبوتات.json"; a.click();
+  URL.revokeObjectURL(url); toast("تم تنزيل نسخة احتياطية");
+}
+function importJSON(ev){
+  const file=ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      if(!data || typeof data!=="object" || !("projects" in data) || !("members" in data))
+        throw new Error("bad");
+      DB=normalizeDB(data);
+      save(); VIEW="dash"; renderShell(); toast("تم استيراد النسخة بنجاح");
+    }catch(e){
+      toast("تعذّر قراءة الملف — تأكد أنه نسخة صحيحة");
+    }
+    ev.target.value="";
+  };
+  reader.readAsText(file);
+}
+/* نافذة تأكيد عامة قابلة لإعادة الاستخدام */
+let _confirmCb=null;
+function confirmModal(title, msg, okLabel, cb){
+  _confirmCb=cb;
+  const bg=document.getElementById("modalBg");
+  bg.innerHTML=`<div class="modal">
+    <div class="mi">${svg(I.trash)}</div>
+    <h3>${esc(title)}</h3>
+    <p>${esc(msg)}</p>
+    <div class="row">
+      <button class="btn ghost" onclick="closeModal()">إلغاء</button>
+      <button class="btn primary" style="background:var(--red);border-color:var(--red)" onclick="runConfirm()">${esc(okLabel)}</button>
+    </div></div>`;
+  bg.classList.add("show");
+  bg.onclick=e=>{ if(e.target===bg) closeModal(); };
+}
+function runConfirm(){ const cb=_confirmCb; closeModal(); if(cb) cb(); }
+function closeModal(){ document.getElementById("modalBg").classList.remove("show"); _confirmCb=null; }
+function askReset(){
+  confirmModal("تفريغ كل البيانات؟",
+    "سيتم حذف جميع المشاريع والمهام والإنجازات والقطع نهائيًا وإعادة المسار فارغًا. لا يمكن التراجع.",
+    "نعم، تفريغ", ()=>{
+      DB=seed(); DB.projects=[]; DB.weekly=[]; DB.achievements=[]; DB.parts=[];
+      save(); VIEW="dash"; renderShell(); toast("تم تفريغ المسار");
+    });
+}
+
+/* ================================================================
+   تشغيل
+================================================================ */
+renderShell();
+cloudInit();   // يتصل بالسحابة إن كان الرابط مضبوطًا (وإلا يبقى محليًا)
+
+</script>
+</body>
+</html>
