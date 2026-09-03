@@ -1296,31 +1296,41 @@ function askReset(){
       save(); VIEW="dash"; renderShell(); toast("تم تفريغ المسار");
     });
 }
-
+function save() {
+  localStorage.setItem('my_app_db', JSON.stringify(DB));
+  saveData();
+}
 // دالة جلب البيانات من Supabase
 async function loadData() {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*');
+    .select('title')
+    .eq('id', 1)
+    .maybeSingle();
 
   if (error) {
     console.error('خطأ في جلب البيانات:', error);
-  } else {
-    console.log('البيانات المسترجعة من السحابة:', data);
+  } else if (data && data.title) {
+    try {
+      DB = JSON.parse(data.title);
+      renderShell();
+    } catch (e) {
+      console.error('خطأ في قراءة البيانات:', e);
+    }
   }
 }
 
-// دالة حفظ البيانات في Supabase
-async function saveData(text) {
-  const { data, error } = await supabase
+// دالة حفظ كامل البيانات في Supabase
+async function saveData() {
+  const jsonData = JSON.stringify(DB);
+  const { error } = await supabase
     .from('tasks')
-    .insert([{ title: text }]);
+    .upsert([{ id: 1, title: jsonData }]);
 
   if (error) {
-    console.error('خطأ في الحفظ:', error);
+    console.error('خطأ في الحفظ السحابي:', error);
   } else {
     console.log('تم الحفظ في السحابة بنجاح!');
-    loadData();
   }
 }
 renderShell();
