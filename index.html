@@ -1297,43 +1297,246 @@ function askReset(){
     });
 }
 function save() { saveData(); }
-// دالة جلب البيانات من Supabase
-async function loadData() {
-  try {
-    const { data, error } = await supabaseClient
-      .from('tasks')
-      .select('title')
-      .eq('id', 1)
-      .maybeSingle();
+<!-- ================================
+     Supabase
+================================ -->
 
-    if (error) {
-      console.error('خطأ في جلب البيانات:', error);
-    } else if (data && data.title) {
-      DB = JSON.parse(data.title);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* =========================================
+   إعداد Supabase
+========================================= */
+
+const SUPABASE_URL = "ضع_رابط_مشروعك_هنا";
+const SUPABASE_ANON_KEY = "ضع_المفتاح_العام_هنا";
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+
+/* =========================================
+   اختبار الاتصال بـ Supabase
+========================================= */
+
+async function testSupabaseConnection() {
+
+    console.log("🔵 اختبار الاتصال بـ Supabase...");
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from("tasks")
+            .select("id")
+            .limit(1);
+
+        if (error) {
+
+            console.error("❌ فشل الاتصال بقاعدة البيانات");
+            console.error("Message:", error.message);
+            console.error("Details:", error.details);
+            console.error("Hint:", error.hint);
+            console.error("Code:", error.code);
+
+            return false;
+        }
+
+        console.log("✅ الاتصال بـ Supabase يعمل");
+        console.log("البيانات:", data);
+
+        return true;
+
+    } catch (error) {
+
+        console.error("❌ خطأ في الاتصال:", error);
+
+        return false;
     }
-  } catch (e) {
-    console.error('حدث خطأ أثناء الاتصال:', e);
-  } finally {
-    renderShell();
-  }
 }
 
-// دالة حفظ البيانات في Supabase
+
+/* =========================================
+   جلب البيانات من Supabase
+========================================= */
+
+async function loadData() {
+
+    console.log("🔵 جاري تحميل البيانات...");
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from("tasks")
+            .select("id, title")
+            .eq("id", 1)
+            .maybeSingle();
+
+
+        /* ---------------------------------
+           في حالة وجود خطأ
+        --------------------------------- */
+
+        if (error) {
+
+            console.error("❌ خطأ في جلب البيانات من Supabase");
+            console.error("Message:", error.message);
+            console.error("Details:", error.details);
+            console.error("Hint:", error.hint);
+            console.error("Code:", error.code);
+
+            return;
+        }
+
+
+        /* ---------------------------------
+           لا توجد بيانات
+        --------------------------------- */
+
+        if (!data) {
+
+            console.log("ℹ️ لا توجد بيانات محفوظة في Supabase");
+
+            return;
+        }
+
+
+        console.log("✅ تم جلب البيانات بنجاح");
+        console.log("البيانات:", data);
+
+
+        /* ---------------------------------
+           تحويل JSON
+        --------------------------------- */
+
+        if (data.title) {
+
+            try {
+
+                const savedData = JSON.parse(data.title);
+
+                DB = savedData;
+
+                console.log("✅ تم تحميل بيانات الموقع بنجاح");
+
+            } catch (jsonError) {
+
+                console.error(
+                    "❌ البيانات الموجودة في قاعدة البيانات ليست JSON صحيحة"
+                );
+
+                console.error(jsonError);
+            }
+        }
+
+    } catch (error) {
+
+        console.error("❌ حدث خطأ غير متوقع أثناء جلب البيانات");
+        console.error(error);
+
+    } finally {
+
+        /* ---------------------------------
+           تشغيل واجهة الموقع
+        --------------------------------- */
+
+        try {
+
+            renderShell();
+
+        } catch (renderError) {
+
+            console.error("❌ خطأ في تشغيل واجهة الموقع");
+            console.error(renderError);
+        }
+    }
+}
+
+
+/* =========================================
+   حفظ البيانات في Supabase
+========================================= */
+
 async function saveData() {
-  const jsonData = JSON.stringify(DB);
-  const { error } = await supabaseClient
-    .from('tasks')
-    .upsert([{ id: 1, title: jsonData }]);
 
-  if (error) {
-    console.error('خطأ في الحفظ السحابي:', error);
-  } else {
-    console.log('تم الحفظ في السحابة بنجاح!');
-  }
+    console.log("🔵 جاري حفظ البيانات...");
+
+    try {
+
+        /* ---------------------------------
+           تحويل DB إلى JSON
+        --------------------------------- */
+
+        const jsonData = JSON.stringify(DB);
+
+
+        /* ---------------------------------
+           حفظ / تحديث السجل
+        --------------------------------- */
+
+        const { data, error } = await supabaseClient
+            .from("tasks")
+            .upsert(
+                {
+                    id: 1,
+                    title: jsonData
+                },
+                {
+                    onConflict: "id"
+                }
+            )
+            .select();
+
+
+        /* ---------------------------------
+           في حالة وجود خطأ
+        --------------------------------- */
+
+        if (error) {
+
+            console.error("❌ فشل حفظ البيانات");
+
+            console.error("Message:", error.message);
+            console.error("Details:", error.details);
+            console.error("Hint:", error.hint);
+            console.error("Code:", error.code);
+
+            return false;
+        }
+
+
+        console.log("✅ تم حفظ البيانات في Supabase بنجاح");
+        console.log("البيانات المحفوظة:", data);
+
+        return true;
+
+    } catch (error) {
+
+        console.error("❌ حدث خطأ أثناء الحفظ");
+        console.error(error);
+
+        return false;
+    }
 }
 
-// تشغيل جلب البيانات عند فتح الصفحة
-loadData();
+
+/* =========================================
+   تشغيل الموقع
+========================================= */
+
+(async function startApp() {
+
+    console.log("🚀 تشغيل الموقع...");
+
+    /* اختبار Supabase */
+    await testSupabaseConnection();
+
+    /* تحميل البيانات */
+    await loadData();
+
+})();
 </script>
+
 </body>
 </html>
