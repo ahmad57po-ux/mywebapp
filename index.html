@@ -1296,7 +1296,7 @@ function askReset(){
       save(); VIEW="dash"; renderShell(); toast("تم تفريغ المسار");
     });
 }
-function save() {
+function save() { saveData(); }
 // دالة جلب البيانات من Supabase
 async function loadData() {
   try {
